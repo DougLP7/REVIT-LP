@@ -617,7 +617,7 @@
 
   // ===== INTEGRAÇÃO WHATSAPP + GOOGLE SHEETS =====
   // Substitua pela URL do seu Google Apps Script Web App (mesmo padrão usado nas LPs da Kibune e da Blanc).
-  const SHEET_ENDPOINT = "COLE_AQUI_A_URL_DO_APPS_SCRIPT";
+  const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxhqHyRLKn6HvZfYYUG1knwMI7DhCw3eo8h-KP3940FGP5SMZ_NzCZuA-UXTNvIJKd5/exec";
   const CLINIC_WHATSAPP = "5561998361105";
 
   function sendLead(nome, telefone){
@@ -626,7 +626,7 @@
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: nome, telefone: telefone, origem: 'LP Invisalign' })
+        body: JSON.stringify({ nome: nome, telefone: telefone, origem: 'LP Revitá - Formulário principal' })
       }).catch(() => {});
     }
     const msg = encodeURIComponent(`Olá! Me chamo ${nome} e quero agendar uma avaliação para o tratamento com Invisalign.`);
