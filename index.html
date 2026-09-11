@@ -73,6 +73,11 @@
     -webkit-backdrop-filter:blur(10px);
     border-radius:999px;
     border:1px solid rgba(255,255,255,.08);
+    transition:transform .35s ease, opacity .35s ease;
+  }
+  header.nav.nav-hidden{
+    transform:translateY(-140%);
+    opacity:0;
   }
   .nav-logo{display:flex; align-items:center;}
   .nav-logo img{height:22px; width:auto; filter:brightness(0) invert(1);}
@@ -133,7 +138,7 @@
     .hero img.bg{object-position:center 10%;}
   }
 
-  section{padding:110px 0;}
+  section{padding:88px 0;}
   .section-cream{background:var(--cream);}
   .section-blush{background:var(--blush);}
   .section-dark{background:#231b17; color:#F3EAE5;}
@@ -275,6 +280,26 @@
   footer .bottom{border-top:1px solid rgba(250,246,243,.12); padding-top:24px; font-size:13px; color:rgba(250,246,243,.4);}
 
   ::selection{background:var(--rose); color:#fff;}
+
+  /* Respiro mais enxuto em telas menores */
+  @media (max-width:760px){
+    section{padding:52px 0;}
+    .hero{padding:110px 0 44px;}
+    h2.title{margin:0 0 18px;}
+    .eyebrow{margin-bottom:8px;}
+    .pain-list{margin-top:22px; gap:16px;}
+    .pain-list li{padding-bottom:16px;}
+    .split{gap:28px;}
+    .ba-grid{margin-top:28px; gap:16px;}
+    .clinic-grid{margin-bottom:32px; gap:12px;}
+    .bio-card{padding:24px; gap:20px;}
+    .offer-card{padding:36px 24px;}
+    .guarantee{padding:32px 24px;}
+    details{padding:16px 0;}
+    .cta-final{padding:36px 22px; gap:28px;}
+    footer{padding:44px 0 28px;}
+    .footer-grid{gap:28px; margin-bottom:28px;}
+  }
 
   /* MODAL */
   .modal-overlay{
@@ -577,6 +602,28 @@
     wrap.classList.remove('playing');
     playIcon.style.display = 'block';
     pauseIcon.style.display = 'none';
+  });
+
+  // Esconde o menu ao rolar pra baixo, mostra ao rolar pra cima
+  const navEl = document.querySelector('header.nav');
+  let lastScrollY = window.scrollY;
+  let ticking = false;
+
+  function updateNav(){
+    const currentY = window.scrollY;
+    if (currentY > lastScrollY && currentY > 120) {
+      navEl.classList.add('nav-hidden');
+    } else {
+      navEl.classList.remove('nav-hidden');
+    }
+    lastScrollY = currentY;
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(updateNav);
+      ticking = true;
+    }
   });
 
   // Campo de telefone: aceita apenas números
