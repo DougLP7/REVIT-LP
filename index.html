@@ -81,7 +81,7 @@
   }
   .nav-logo{display:flex; align-items:center;}
   .nav-logo img{height:22px; width:auto; filter:brightness(0) invert(1);}
-  header.nav .btn{padding:10px 22px; font-size:13px;}
+  header.nav .btn{padding:13px 22px; font-size:13px; min-height:44px; display:inline-flex; align-items:center;}
 
   /* HERO */
   .hero{
@@ -624,7 +624,7 @@
       requestAnimationFrame(updateNav);
       ticking = true;
     }
-  });
+  }, { passive: true });
 
   // Campo de telefone: aceita apenas números
   ['leadPhone', 'modalPhone'].forEach(id => {
@@ -671,12 +671,33 @@
   modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-  // ===== INTEGRAÇÃO WHATSAPP + GOOGLE SHEETS =====
+  // ===== INTEGRAÇÃO WHATSAPP + GOOGLE SHEETS + CONVERSÃO (GOOGLE ADS / GTM) =====
   // Substitua pela URL do seu Google Apps Script Web App (mesmo padrão usado nas LPs da Kibune e da Blanc).
   const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxhqHyRLKn6HvZfYYUG1knwMI7DhCw3eo8h-KP3940FGP5SMZ_NzCZuA-UXTNvIJKd5/exec";
   const CLINIC_WHATSAPP = "556195723155";
 
-  function sendLead(nome, telefone){
+  // O Google Tag Manager (GTM) precisa estar instalado nesta página (snippet no <head> e
+  // logo após a abertura do <body>) para que este evento vire uma conversão no Google Ads.
+  // Sem o GTM, este dataLayer.push não tem efeito nenhum na campanha — ele só existe pra ser
+  // "escutado" por um gatilho de Tag configurado lá dentro do GTM com o nome de evento
+  // exatamente igual a "lead_whatsapp".
+  window.dataLayer = window.dataLayer || [];
+
+  // Validação real do cadastro — só um nome de verdade e um telefone com DDD contam como lead.
+  // Isso é o que impede que um clique no botão (sem preencher nada) seja contado como conversão.
+  function leadValido(nome, telefone){
+    const nomeOk = nome.length >= 2;
+    const telefoneOk = telefone.replace(/\D/g, '').length >= 10; // DDD + número
+    return nomeOk && telefoneOk;
+  }
+
+  function sendLead(nome, telefone, formEl){
+    if (!leadValido(nome, telefone)) {
+      alert('Preencha seu nome e um número de WhatsApp válido (com DDD) para continuar.');
+      return;
+    }
+
+    // 1) Grava o lead na planilha
     if (SHEET_ENDPOINT && SHEET_ENDPOINT.indexOf('COLE_AQUI') === -1) {
       fetch(SHEET_ENDPOINT, {
         method: 'POST',
@@ -685,8 +706,23 @@
         body: JSON.stringify({ nome: nome, telefone: telefone, origem: 'LP Revitá - Formulário principal' })
       }).catch(() => {});
     }
+
+    // 2) Só AQUI — cadastro validado e concluído — dispara o evento de conversão pro GTM/Google Ads.
+    //    Um clique isolado no botão "Quero avaliar meu sorriso" (que só abre o modal) NUNCA
+    //    chega até este ponto, então nunca é contado como lead.
+    window.dataLayer.push({
+      event: 'lead_whatsapp',
+      lead_nome: nome,
+      lead_origem: 'LP Revitá - Invisalign'
+    });
+
+    // 3) Só então redireciona pro WhatsApp da clínica
     const msg = encodeURIComponent(`Olá! Me chamo ${nome} e quero agendar uma avaliação para o tratamento com Invisalign.`);
-    window.location.href = `https://wa.me/${CLINIC_WHATSAPP}?text=${msg}`;
+    const destino = `https://wa.me/${CLINIC_WHATSAPP}?text=${msg}`;
+
+    // Pequeno atraso pra garantir que o evento seja registrado pelo GTM antes de sair da página
+    // (no mobile, a troca de página pode cancelar um dataLayer.push que ainda não foi processado).
+    setTimeout(() => { window.location.href = destino; }, 150);
   }
 
   document.getElementById('leadForm').addEventListener('submit', function (e) {
